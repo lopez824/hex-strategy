@@ -21,6 +21,36 @@ public struct HexCoordinates
         return new HexCoordinates(x - z/2, z);
     }
 
+    public static HexCoordinates FromPosition(Vector3 position)
+    {
+        float x = position.x / (HexData.innerRadius * 2f);
+        float y = -x;
+
+        float offset = position.z / (HexData.outerRadius * 3f);
+        x -= offset;
+        y -= offset;
+
+        int i_x = Mathf.RoundToInt(x);
+        int i_y = Mathf.RoundToInt(y);
+        int i_z = Mathf.RoundToInt(-x - y);
+
+        // handle rounding errors
+        if (i_x + i_y + i_z != 0)
+        {
+            float dX = Mathf.Abs(x - i_x);
+            float dY = Mathf.Abs(y - i_y);
+            float dZ = Mathf.Abs(-x - y - i_z);
+
+            if (dX > dY && dX > dZ)
+                i_x = -i_y - i_z;
+
+            else if (dZ > dY)
+                i_z = -i_x - i_y;
+        }
+
+        return new HexCoordinates(i_x, i_z);
+    }
+
     // Override to nicely format coordinate data
     public override string ToString()
     {

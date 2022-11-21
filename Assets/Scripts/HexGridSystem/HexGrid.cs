@@ -1,12 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using TMPro;
 
 public class HexGrid : MonoBehaviour
 {
     public int width = 6;
     public int height = 6;
+    public Color defaultColor = Color.white;
+    public Color touchedColor = Color.cyan;
 
     [SerializeField]
     private TextMeshProUGUI cellDebugLabel;
@@ -46,6 +49,7 @@ public class HexGrid : MonoBehaviour
         cell.transform.SetParent(transform, false);
         cell.transform.localPosition = position;
         cell.coordinates = HexCoordinates.FromOffset(x, z);
+        cell.color = defaultColor;
         AddDebugLabel(cell, position, x, z);
     }
 
@@ -56,5 +60,32 @@ public class HexGrid : MonoBehaviour
         label.rectTransform.SetParent(gridCanvas.transform, false);
         label.rectTransform.anchoredPosition = new Vector2(position.x, position.z);
         label.text = cell.coordinates.ToStringNewLine();
+    }
+
+    private void Update()
+    {
+        if (Input.GetMouseButton(0) && !EventSystem.current.IsPointerOverGameObject())
+            HandleInput();
+    }
+
+    private void HandleInput()
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit))
+            TouchCell(hit.point);
+    }
+
+    public void TouchCell(Vector3 position)
+    {
+        position = transform.InverseTransformPoint(position);
+        HexCoordinates coordinates = HexCoordinates.FromPosition(position);
+
+        int index = coordinates.X + coordinates.Z * width + coordinates.Z / 2;
+        HexCell cell = cells[index];
+        cell.color = touchedColor;
+        hexMesh.Triangulate(cells);
+
+        Debug.Log("Touched At: " + coordinates.ToString());
     }
 }
